@@ -3,6 +3,24 @@ var API_KEY = 'sk-XvsPGPNB59jInCrjPuXcCFBl3r68KIjQuKrMgUYgzEEh2nmp';
 var API_URL = 'https://api.yairouter.com/v1/chat/completions';
 var MODEL = 'gpt-4o-mini';
 
+function doGet(e) {
+  // GET + JSONP: landing page 用 <script> 调用,绕开 CORS
+  var p = (e && e.parameter) || {};
+  var cb = p.callback || '';
+  var out;
+  try {
+    var fake = { postData: { contents: JSON.stringify({ grade: p.grade || 'Grade 7', subject: p.subject || 'History', topic: p.topic || '' }) } };
+    out = doPost(fake);
+  } catch (err) {
+    out = { ok: false, error: String(err).slice(0, 200) };
+  }
+  var body = (typeof out === 'object' && out.getContent) ? out.getContent() : JSON.stringify(out);
+  if (cb) {
+    return ContentService.createTextOutput(cb + '(' + body + ');').setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.TEXT);
+}
+
 function doPost(e) {
   var out = { ok: false };
   try {

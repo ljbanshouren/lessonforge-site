@@ -130,17 +130,21 @@ async function forge() {
   btn.disabled = true; btn.textContent = "Forging…";
   out.classList.add("show");
   out.textContent = "Forging your opening…";
-  try {
-    const res = await fetch("/api/generate", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ grade, subject, topic })
-    });
-    const data = await res.json();
-    if (data.text) { out.textContent = data.text; }
+  await new Promise(function(resolve, reject) {
+    var cb = "lf" + Date.now();
+    window[cb] = function(data) { resolve(data); delete window[cb]; var s = document.getElementById(cb); if (s) s.remove(); };
+    var s = document.createElement("script");
+    s.id = cb;
+    s.src = "https://script.google.com/macros/s/AKfycbxXLgUOkwb5-_rPcRxUx2r6eufOh4kNLCxBnTXIBU9hgR96DPToXK_eNz4Ve5IxX5Y/exec"
+      + "?grade=" + encodeURIComponent(grade) + "&subject=" + encodeURIComponent(subject)
+      + "&topic=" + encodeURIComponent(topic) + "&callback=" + cb;
+    s.onerror = function() { resolve({ ok: false }); };
+    document.body.appendChild(s);
+    setTimeout(function() { resolve({ ok: false, error: "timeout" }); }, 60000);
+  }).then(function(data) {
+    if (data && data.ok && data.text) { out.textContent = data.text; }
     else { out.textContent = "Something went wrong — try again in a moment."; }
-  } catch (e) {
-    out.textContent = "Network hiccup — try again in a moment.";
-  }
+  });
   btn.disabled = false; btn.textContent = "Forge my lesson opening — free";
 }
 </script>
